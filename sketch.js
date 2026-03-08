@@ -490,8 +490,9 @@ function windowResized() {
 // 왼쪽 UI 컨테이너를 뷰포트 높이에 따라 스케일
 function updateLeftUIScale() {
   if (!leftUIContainer) return;
-  // 디자인 기준 높이(920px) 대비 현재 윈도우 높이 비율로 항상 비례
-  let scale = windowHeight / UI_DESIGN_HEIGHT;
+  // 화면 높이의 92%만 사용 (아래 8% 여백 유지)
+  let targetHeight = windowHeight * 0.92;
+  let scale = targetHeight / UI_DESIGN_HEIGHT;
   leftUIContainer.style('transform', 'scale(' + scale + ')');
 }
 
