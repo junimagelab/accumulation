@@ -491,8 +491,9 @@ function windowResized() {
 function updateLeftUIScale() {
   if (!leftUIContainer) return;
   // 실제 브라우저 뷰포트 높이 기준으로 비율 계산
+  // 하단 8% 여백을 항상 유지
   let vh = window.innerHeight;
-  let scale = vh / UI_DESIGN_HEIGHT;
+  let scale = (vh * 0.92) / UI_DESIGN_HEIGHT;
   leftUIContainer.style('transform', 'scale(' + scale + ')');
 }
 
