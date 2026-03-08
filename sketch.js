@@ -516,15 +516,17 @@ function draw() {
   
   let halfWidth = width / 2 +3;
   
-  // 오른쪽 영역: SVG 이미지 크기 계산
-  let imgWidth2 = (svgImage.width / svgImage.height) * height;
+  // 오른쪽 영역: SVG 이미지 크기 계산 (2% 축소)
+  let imgWidth2 = (svgImage.width / svgImage.height) * height * 0.98;
+  // 오른쪽 윈도우 끝 기준 정렬 (우측 20px 여백)
+  let svgRightEdge = width / 2 - 20;
+  let svgCenterX = svgRightEdge - (imgWidth2 + 30) / 2;
   
   // 왼쪽 영역: 222.svg 이미지 (맨 위에)
   push();
   // svgImage의 왼쪽 끝에서 15px 왼쪽에 배치
-  let svgImageCenterX = width/2 - 20 - (imgWidth2 + 30)/2;
   let imgWidth = (svgImage2.width / svgImage2.height) * height;
-  translate(svgImageCenterX - imgWidth2/2 - 15 - imgWidth/2, 0, 1);
+  translate(svgCenterX - imgWidth2/2 - 15 - imgWidth/2, 0, 1);
   resetShader();
   imageMode(CENTER);
   image(svgImage2, 0, 0, imgWidth * 1.05, height * 1.05);
@@ -532,7 +534,7 @@ function draw() {
   
   // 왼쪽 영역: 고정된 2D 텍스트 (드래그 불가)
   push();
-  translate(svgImageCenterX - imgWidth2/2 - 15 - imgWidth/2, -LETTER_SIZE * 0.15 + 10, 2); // svgImage2 중앙에 배치, 맨 앞에
+  translate(svgCenterX - imgWidth2/2 - 15 - imgWidth/2, -LETTER_SIZE * 0.15 + 10, 2); // svgImage2 중앙에 배치, 맨 앞에
   // 2D 텍스트 표시
   resetShader(); // 셰이더 해제
   fill(0); // 검은색
@@ -545,7 +547,7 @@ function draw() {
   
   // 오른쪽 영역: 배경 사각박스
   push();
-  translate(width/2 - 20 - (imgWidth2 + 30)/2, 0, -1); // 오른쪽 정렬 + 20px 여백
+  translate(svgCenterX, 0, -1); // 우측 기준 정렬
   resetShader();
   fill('#EBEBEC');
   noStroke();
@@ -555,7 +557,7 @@ function draw() {
   
   // 오른쪽 영역: SVG 이미지
   push();
-  translate(width/2 - 20 - (imgWidth2 + 30)/2, 0, 0); // 회색박스 중앙에 정렬
+  translate(svgCenterX, 0, 0); // 우측 기준 정렬
   resetShader();
   imageMode(CENTER);
   image(svgImage, 0, 0, imgWidth2, height);
@@ -563,7 +565,7 @@ function draw() {
   
   // 오른쪽 영역: 인터랙티브 영역
   push();
-  translate(width/2 - 180 - (imgWidth2 + 30)/2, 0, 250); // 회색박스 중앙에 정렬
+  translate(svgCenterX - 160, 0, 250); // 우측 기준 정렬
   scale(0.6); // 3D 오브젝트 크기 60%로 축소
   
   // 마우스 드래그로 회전 제어 (캔버스에서 드래그 시작한 경우에만)
