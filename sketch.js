@@ -116,149 +116,9 @@ function setup() {
   leftUIContainer.style('z-index', '1000');
   updateLeftUIScale(); // 초기 스케일 적용
 
-  // 렌더링 모드 스위치 (Solid / Wireframe)
-  switchContainer = createDiv('');
-  switchContainer.parent(leftUIContainer);
-  switchContainer.style('position', 'absolute');
-  switchContainer.style('left', '30px');
-  switchContainer.style('top', '625px');
-  switchContainer.class('toggle-switch');
-  
-  let solidOption = createDiv('Solid');
-  solidOption.parent(switchContainer);
-  solidOption.class('toggle-option left active');
-  solidOption.id('solid-option');
-  
-  let wireframeOption = createDiv('Wireframe');
-  wireframeOption.parent(switchContainer);
-  wireframeOption.class('toggle-option right inactive');
-  wireframeOption.id('wireframe-option');
-  
-  // Solid 클릭
-  solidOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(renderMode !== 'solid') {
-      renderMode = 'solid';
-      solidOption.removeClass('inactive');
-      solidOption.addClass('active');
-      wireframeOption.removeClass('active');
-      wireframeOption.addClass('inactive');
-    }
-  });
-  solidOption.mouseReleased(() => { uiIsInteracting = false; });
-  
-  // Wireframe 클릭
-  wireframeOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(renderMode !== 'wireframe') {
-      renderMode = 'wireframe';
-      wireframeOption.removeClass('inactive');
-      wireframeOption.addClass('active');
-      solidOption.removeClass('active');
-      solidOption.addClass('inactive');
-    }
-  });
-  wireframeOption.mouseReleased(() => { uiIsInteracting = false; });
+  // ===== UI 요소들을 시각적 순서(위→아래)로 생성 =====
 
-  // 폰트 선택 스위치 (Helvetica / Bodoni)
-  let fontSwitchContainer = createDiv('');
-  fontSwitchContainer.parent(leftUIContainer);
-  fontSwitchContainer.style('position', 'absolute');
-  fontSwitchContainer.style('left', '30px');
-  fontSwitchContainer.style('top', '670px');
-  fontSwitchContainer.class('toggle-switch');
-  
-  let helveticaOption = createDiv('Helvetica');
-  helveticaOption.parent(fontSwitchContainer);
-  helveticaOption.class('toggle-option left active');
-  helveticaOption.id('helvetica-option');
-  
-  let bodoniOption = createDiv('Bodoni');
-  bodoniOption.parent(fontSwitchContainer);
-  bodoniOption.class('toggle-option right inactive');
-  bodoniOption.id('bodoni-option');
-  
-  // Helvetica 클릭
-  helveticaOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(currentFontMode !== 'helvetica') {
-      currentFontMode = 'helvetica';
-      // 현재 글자 geometry 재생성
-      frozenTs = [];
-      hasFrozenOnce = false;
-      showLiveT = true;
-      let fontId = getFontIdForLetter(currentLetter);
-      let cacheKey = `${currentLetter}|${fontId}`;
-      if(letterGeometryCache[cacheKey]) {
-        letterGeometry = letterGeometryCache[cacheKey];
-      } else {
-        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
-        letterGeometryCache[cacheKey] = letterGeometry;
-      }
-    }
-    helveticaOption.removeClass('inactive');
-    helveticaOption.addClass('active');
-    bodoniOption.removeClass('active');
-    bodoniOption.addClass('inactive');
-  });
-  helveticaOption.mouseReleased(() => { uiIsInteracting = false; });
-  
-  // Bodoni 클릭
-  bodoniOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(currentFontMode !== 'bodoni') {
-      currentFontMode = 'bodoni';
-      // 현재 글자 geometry 재생성
-      frozenTs = [];
-      hasFrozenOnce = false;
-      showLiveT = true;
-      let fontId = getFontIdForLetter(currentLetter);
-      let cacheKey = `${currentLetter}|${fontId}`;
-      if(letterGeometryCache[cacheKey]) {
-        letterGeometry = letterGeometryCache[cacheKey];
-      } else {
-        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
-        letterGeometryCache[cacheKey] = letterGeometry;
-      }
-    }
-    bodoniOption.removeClass('inactive');
-    bodoniOption.addClass('active');
-    helveticaOption.removeClass('active');
-    helveticaOption.addClass('inactive');
-  });
-  bodoniOption.mouseReleased(() => { uiIsInteracting = false; });
-
-  // 3D Depth 슬라이더
-  let depthLabel = createDiv('3D Depth');
-  depthLabel.parent(leftUIContainer);
-  depthLabel.style('position', 'absolute');
-  depthLabel.style('left', '30px');
-  depthLabel.style('top', '715px');
-  depthLabel.style('font-family', "'Courier New', monospace");
-  depthLabel.style('font-size', '10.5pt');
-  depthLabel.style('color', '#000');
-
-  let depthSlider = createSlider(10, 200, 100, 1);
-  depthSlider.parent(leftUIContainer);
-  depthSlider.style('position', 'absolute');
-  depthSlider.style('left', '30px');
-  depthSlider.style('top', '738px');
-  depthSlider.style('width', '300px');
-  depthSlider.style('cursor', 'pointer');
-
-  depthSlider.input(() => {
-    uiIsInteracting = true;
-    letterDepth = depthSlider.value();
-    depthLabel.html('3D Depth: ' + letterDepth);
-    // 캐시 초기화 (깊이 변경 시 모든 캐시 무효)
-    letterGeometryCache = {};
-    let fontId = getFontIdForLetter(currentLetter);
-    letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
-    letterGeometryCache[`${currentLetter}|${fontId}`] = letterGeometry;
-  });
-  depthSlider.mouseReleased(() => { uiIsInteracting = false; });
-
-  // 왼쪽 상단 설명 텍스트
+  // 1. 왼쪽 상단 설명 텍스트 (top: 30px)
   let descriptionText = createDiv('This work explores axial accumulation as a visual method, asking what kind of typeface might emerge when letterforms are layered and reassembled, shifting our perspective on what a font can become in future.');
   descriptionText.parent(leftUIContainer);
   descriptionText.style('position', 'absolute');
@@ -270,8 +130,7 @@ function setup() {
   descriptionText.style('max-width', '300px');
   descriptionText.style('line-height', '1.4');
 
-
-  // 설명과 How to use 사이 점선
+  // 2. 설명과 How to use 사이 점선 (top: 190px)
   let dividerLine1 = createDiv('');
   dividerLine1.parent(leftUIContainer);
   dividerLine1.style('position', 'absolute');
@@ -280,9 +139,20 @@ function setup() {
   dividerLine1.style('width', '300px');
   dividerLine1.style('border-top', '2px dotted #000');
 
+  // 3. 사용 방법 텍스트 (top: 218px)
+  let instructionText = createDiv('How to use<br>1. Select a letter below.<br>2. Drag and drop it to build up the composition. (Repeat as desired.)<br>3. Press the "Print" button.<br>4. Check the printer behind you.');
+  instructionText.parent(leftUIContainer);
+  instructionText.style('position', 'absolute');
+  instructionText.style('left', '30px');
+  instructionText.style('top', '218px');
+  instructionText.style('font-family', "'Courier New', monospace");
+  instructionText.style('font-size', '10.5pt');
+  instructionText.style('color', '#000');
+  instructionText.style('max-width', '300px');
+  instructionText.style('line-height', '1.4');
 
-
-    let dividerLine2 = createDiv('');
+  // 4. How to use 아래 점선 (top: 360px)
+  let dividerLine2 = createDiv('');
   dividerLine2.parent(leftUIContainer);
   dividerLine2.style('position', 'absolute');
   dividerLine2.style('left', '30px');
@@ -290,48 +160,7 @@ function setup() {
   dividerLine2.style('width', '300px');
   dividerLine2.style('border-top', '2px dotted #000');
 
-      let dividerLine3 = createDiv('');
-  dividerLine3.parent(leftUIContainer);
-  dividerLine3.style('position', 'absolute');
-  dividerLine3.style('left', '30px');
-  dividerLine3.style('top', '785px');
-  dividerLine3.style('width', '300px');
-  dividerLine3.style('border-top', '2px dotted #000');
-  // Print 버튼
-  let printButton = createButton('Print');
-  printButton.parent(leftUIContainer);
-  printButton.style('position', 'absolute');
-  printButton.style('left', '30px');
-  printButton.style('top', '820px');
-  printButton.style('width', '300px');
-  printButton.style('padding', '6px 45px');
-  printButton.style('background-color', '#000');
-  printButton.style('color', '#fff');
-  printButton.style('border', '2px solid #000');
-  printButton.style('border-radius', '50px');
-  printButton.style('font-family', "'Courier New', monospace");
-  printButton.style('font-size', '14px');
-  printButton.style('font-weight', 'bold');
-  printButton.style('cursor', 'pointer');
-  printButton.mousePressed(() => {
-    uiIsInteracting = true;
-    printReceiptToPosPrinter();
-  });
-  printButton.mouseReleased(() => { uiIsInteracting = false; });
-
-  // Print 버튼 아래 저작권 문구 (How to use와 동일한 스타일)
-  let copyrightText = createDiv('All right reserved Dongjun Choi @COPYRIGHT 2026');
-  copyrightText.parent(leftUIContainer);
-  copyrightText.style('position', 'absolute');
-  copyrightText.style('left', '30px');
-  copyrightText.style('top', '880px');
-  copyrightText.style('font-family', "'Courier New', monospace");
-  copyrightText.style('font-size', '10.5pt');
-  copyrightText.style('color', '#000');
-  copyrightText.style('max-width', '300px');
-  copyrightText.style('line-height', '1.4');
-
-  // A-Z 버튼들
+  // 5. A-Z 버튼들 (top: 390px~)
   let letterButtons = [];
   let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   let startX = 30;
@@ -395,9 +224,9 @@ function setup() {
     letterButtons.push(btn);
   });
 
-  // a-z 버튼들 (소문자)
+  // 6. a-z 버튼들 (소문자, top: 505px~)
   let lowercaseAlphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-  let lowercaseStartY = 505; // 대문자 버튼 아래에 띄워서 배치
+  let lowercaseStartY = 505;
   
   lowercaseAlphabet.forEach((letter, index) => {
     let row = Math.floor(index / buttonsPerRow);
@@ -429,7 +258,7 @@ function setup() {
       hasFrozenOnce = false;
       showLiveT = true;
       
-      currentLetter = letter; // 소문자 그대로 사용
+      currentLetter = letter;
       let fontId = getFontIdForLetter(letter);
       let cacheKey = `${letter}|${fontId}`;
       if(letterGeometryCache[cacheKey]) {
@@ -455,17 +284,185 @@ function setup() {
     letterButtons.push(btn);
   });
 
-  // 사용 방법 텍스트
-  let instructionText = createDiv('How to use<br>1. Select a letter below.<br>2. Drag and drop it to build up the composition. (Repeat as desired.)<br>3. Press the "Print" button.<br>4. Check the printer behind you.');
-  instructionText.parent(leftUIContainer);
-  instructionText.style('position', 'absolute');
-  instructionText.style('left', '30px');
-  instructionText.style('top', '218px');
-  instructionText.style('font-family', "'Courier New', monospace");
-  instructionText.style('font-size', '10.5pt');
-  instructionText.style('color', '#000');
-  instructionText.style('max-width', '300px');
-  instructionText.style('line-height', '1.4');
+  // 7. 렌더링 모드 스위치 Solid/Wireframe (top: 625px)
+  switchContainer = createDiv('');
+  switchContainer.parent(leftUIContainer);
+  switchContainer.style('position', 'absolute');
+  switchContainer.style('left', '30px');
+  switchContainer.style('top', '625px');
+  switchContainer.class('toggle-switch');
+  
+  let solidOption = createDiv('Solid');
+  solidOption.parent(switchContainer);
+  solidOption.class('toggle-option left active');
+  solidOption.id('solid-option');
+  
+  let wireframeOption = createDiv('Wireframe');
+  wireframeOption.parent(switchContainer);
+  wireframeOption.class('toggle-option right inactive');
+  wireframeOption.id('wireframe-option');
+  
+  solidOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if(renderMode !== 'solid') {
+      renderMode = 'solid';
+      solidOption.removeClass('inactive');
+      solidOption.addClass('active');
+      wireframeOption.removeClass('active');
+      wireframeOption.addClass('inactive');
+    }
+  });
+  solidOption.mouseReleased(() => { uiIsInteracting = false; });
+  
+  wireframeOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if(renderMode !== 'wireframe') {
+      renderMode = 'wireframe';
+      wireframeOption.removeClass('inactive');
+      wireframeOption.addClass('active');
+      solidOption.removeClass('active');
+      solidOption.addClass('inactive');
+    }
+  });
+  wireframeOption.mouseReleased(() => { uiIsInteracting = false; });
+
+  // 8. 폰트 선택 스위치 Helvetica/Bodoni (top: 670px)
+  let fontSwitchContainer = createDiv('');
+  fontSwitchContainer.parent(leftUIContainer);
+  fontSwitchContainer.style('position', 'absolute');
+  fontSwitchContainer.style('left', '30px');
+  fontSwitchContainer.style('top', '670px');
+  fontSwitchContainer.class('toggle-switch');
+  
+  let helveticaOption = createDiv('Helvetica');
+  helveticaOption.parent(fontSwitchContainer);
+  helveticaOption.class('toggle-option left active');
+  helveticaOption.id('helvetica-option');
+  
+  let bodoniOption = createDiv('Bodoni');
+  bodoniOption.parent(fontSwitchContainer);
+  bodoniOption.class('toggle-option right inactive');
+  bodoniOption.id('bodoni-option');
+  
+  helveticaOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if(currentFontMode !== 'helvetica') {
+      currentFontMode = 'helvetica';
+      frozenTs = [];
+      hasFrozenOnce = false;
+      showLiveT = true;
+      let fontId = getFontIdForLetter(currentLetter);
+      let cacheKey = `${currentLetter}|${fontId}`;
+      if(letterGeometryCache[cacheKey]) {
+        letterGeometry = letterGeometryCache[cacheKey];
+      } else {
+        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
+        letterGeometryCache[cacheKey] = letterGeometry;
+      }
+    }
+    helveticaOption.removeClass('inactive');
+    helveticaOption.addClass('active');
+    bodoniOption.removeClass('active');
+    bodoniOption.addClass('inactive');
+  });
+  helveticaOption.mouseReleased(() => { uiIsInteracting = false; });
+  
+  bodoniOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if(currentFontMode !== 'bodoni') {
+      currentFontMode = 'bodoni';
+      frozenTs = [];
+      hasFrozenOnce = false;
+      showLiveT = true;
+      let fontId = getFontIdForLetter(currentLetter);
+      let cacheKey = `${currentLetter}|${fontId}`;
+      if(letterGeometryCache[cacheKey]) {
+        letterGeometry = letterGeometryCache[cacheKey];
+      } else {
+        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
+        letterGeometryCache[cacheKey] = letterGeometry;
+      }
+    }
+    bodoniOption.removeClass('inactive');
+    bodoniOption.addClass('active');
+    helveticaOption.removeClass('active');
+    helveticaOption.addClass('inactive');
+  });
+  bodoniOption.mouseReleased(() => { uiIsInteracting = false; });
+
+  // 9. 3D Depth 슬라이더 (top: 715px, 738px)
+  let depthLabel = createDiv('3D Depth');
+  depthLabel.parent(leftUIContainer);
+  depthLabel.style('position', 'absolute');
+  depthLabel.style('left', '30px');
+  depthLabel.style('top', '715px');
+  depthLabel.style('font-family', "'Courier New', monospace");
+  depthLabel.style('font-size', '10.5pt');
+  depthLabel.style('color', '#000');
+
+  let depthSlider = createSlider(10, 200, 100, 1);
+  depthSlider.parent(leftUIContainer);
+  depthSlider.style('position', 'absolute');
+  depthSlider.style('left', '30px');
+  depthSlider.style('top', '738px');
+  depthSlider.style('width', '300px');
+  depthSlider.style('cursor', 'pointer');
+
+  depthSlider.input(() => {
+    uiIsInteracting = true;
+    letterDepth = depthSlider.value();
+    depthLabel.html('3D Depth: ' + letterDepth);
+    letterGeometryCache = {};
+    let fontId = getFontIdForLetter(currentLetter);
+    letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
+    letterGeometryCache[`${currentLetter}|${fontId}`] = letterGeometry;
+  });
+  depthSlider.mouseReleased(() => { uiIsInteracting = false; });
+
+  // 10. 슬라이더 아래 점선 (top: 785px)
+  let dividerLine3 = createDiv('');
+  dividerLine3.parent(leftUIContainer);
+  dividerLine3.style('position', 'absolute');
+  dividerLine3.style('left', '30px');
+  dividerLine3.style('top', '785px');
+  dividerLine3.style('width', '300px');
+  dividerLine3.style('border-top', '2px dotted #000');
+
+  // 11. Print 버튼 (top: 820px)
+  let printButton = createButton('Print');
+  printButton.parent(leftUIContainer);
+  printButton.style('position', 'absolute');
+  printButton.style('left', '30px');
+  printButton.style('top', '820px');
+  printButton.style('width', '300px');
+  printButton.style('padding', '6px 45px');
+  printButton.style('background-color', '#000');
+  printButton.style('color', '#fff');
+  printButton.style('border', '2px solid #000');
+  printButton.style('border-radius', '50px');
+  printButton.style('font-family', "'Courier New', monospace");
+  printButton.style('font-size', '14px');
+  printButton.style('font-weight', 'bold');
+  printButton.style('cursor', 'pointer');
+  printButton.mousePressed(() => {
+    uiIsInteracting = true;
+    printReceiptToPosPrinter();
+  });
+  printButton.mouseReleased(() => { uiIsInteracting = false; });
+
+  // 12. 저작권 문구 (top: 880px)
+  let copyrightText = createDiv('All right reserved Dongjun Choi @COPYRIGHT 2026');
+  copyrightText.parent(leftUIContainer);
+  copyrightText.style('position', 'absolute');
+  copyrightText.style('left', '30px');
+  copyrightText.style('top', '880px');
+  copyrightText.style('font-family', "'Courier New', monospace");
+  copyrightText.style('font-size', '10.5pt');
+  copyrightText.style('color', '#000');
+  copyrightText.style('max-width', '300px');
+  copyrightText.style('line-height', '1.4');
+
+  // ===== UI 요소 생성 끝 =====
 
   // 드래그 시작은 캔버스 위에서만 인정 (UI 클릭으로 회전되는 문제 방지)
   canvas.mousePressed(() => {
