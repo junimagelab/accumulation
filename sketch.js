@@ -12,6 +12,7 @@ let uiIsInteracting = false; // UI 상호작용 여부
 let renderModeSelect; // 렌더링 모드 선택 드롭다운
 let renderMode = 'solid'; // solid / wireframe
 let switchContainer; // 렌더링 모드 스위치 컨테이너
+let uiPanel; // 좌측 UI 패널(반응형)
 let requestTransparentExport = false; // PNG export without background request flag
 let canvas; // p5 canvas handle (to scope drag start to canvas)
 let chromeShader; // 크롬 효과 셰이더
@@ -51,6 +52,29 @@ function resetDefaultPerspectiveAndCamera() {
   const camZ = (height / 2) / Math.tan(fov / 2);
   perspective(fov, aspect, camZ / 10, camZ * 10);
   camera(0, 0, camZ, 0, 0, 0, 0, 1, 0);
+}
+
+function updateUiPanelLayout() {
+  if (!uiPanel) {
+    return;
+  }
+
+  const basePanelWidth = 300;
+  const margin = 30;
+
+  const availableWidth = max(0, windowWidth - margin * 2);
+  const availableHeight = max(0, windowHeight - margin * 2);
+
+  // Heuristic: original UI was designed around ~900px height.
+  const scaleFromWidth = availableWidth / basePanelWidth;
+  const scaleFromHeight = availableHeight / 900;
+  const uiScale = constrain(min(1, scaleFromWidth, scaleFromHeight), 0.6, 1);
+
+  uiPanel.style('width', `${basePanelWidth}px`);
+  uiPanel.style('transform-origin', 'top left');
+  uiPanel.style('transform', `scale(${uiScale})`);
+  // Compensate max-height for scale so the visible panel fits in the viewport.
+  uiPanel.style('max-height', `${availableHeight / uiScale}px`);
 }
 
 function preload() {
@@ -103,10 +127,15 @@ function setup() {
 
   resetDefaultPerspectiveAndCamera();
 
+  // 좌측 UI 패널 (고정 + 반응형)
+  uiPanel = createDiv('');
+  uiPanel.class('ui-panel');
+  uiPanel.style('z-index', '1000');
+
   // 렌더링 모드 스위치 (Solid / Wireframe)
   switchContainer = createDiv('');
-  switchContainer.position(30, 625);
   switchContainer.class('toggle-switch');
+  switchContainer.parent(uiPanel);
   switchContainer.style('z-index', '1000');
   
   let solidOption = createDiv('Solid');
@@ -147,8 +176,8 @@ function setup() {
 
   // 폰트 선택 스위치 (Helvetica / Bodoni)
   let fontSwitchContainer = createDiv('');
-  fontSwitchContainer.position(30, 670);
   fontSwitchContainer.class('toggle-switch');
+  fontSwitchContainer.parent(uiPanel);
   fontSwitchContainer.style('z-index', '1000');
   
   let helveticaOption = createDiv('Helvetica');
@@ -213,15 +242,15 @@ function setup() {
 
   // 3D Depth 슬라이더
   let depthLabel = createDiv('3D Depth');
-  depthLabel.position(30, 715);
+  depthLabel.parent(uiPanel);
   depthLabel.style('font-family', "'Courier New', monospace");
   depthLabel.style('font-size', '10.5pt');
   depthLabel.style('color', '#000');
   depthLabel.style('z-index', '1000');
 
   let depthSlider = createSlider(10, 200, 100, 1);
-  depthSlider.position(30, 738);
-  depthSlider.style('width', '300px');
+  depthSlider.parent(uiPanel);
+  depthSlider.style('width', '100%');
   depthSlider.style('z-index', '1000');
   depthSlider.style('cursor', 'pointer');
 
@@ -239,81 +268,41 @@ function setup() {
 
   // 왼쪽 상단 설명 텍스트
   let descriptionText = createDiv('This work explores axial accumulation as a visual method, asking what kind of typeface might emerge when letterforms are layered and reassembled, shifting our perspective on what a font can become in future.');
-  descriptionText.position(30, 30);
+  descriptionText.parent(uiPanel);
   descriptionText.style('font-family', "'Courier New', monospace");
   descriptionText.style('font-size', '10.5pt');
   descriptionText.style('color', '#000');
-  descriptionText.style('max-width', '300px');
+  descriptionText.style('max-width', '100%');
   descriptionText.style('line-height', '1.4');
   descriptionText.style('z-index', '1000');
 
 
   // 설명과 How to use 사이 점선
   let dividerLine1 = createDiv('');
-  dividerLine1.position(30, 190);
-  dividerLine1.style('width', '300px');
+  dividerLine1.parent(uiPanel);
+  dividerLine1.style('width', '100%');
   dividerLine1.style('border-top', '2px dotted #000');
   dividerLine1.style('z-index', '1000');
 
 
-
-    let dividerLine2 = createDiv('');
-  dividerLine2.position(30, 360);
-  dividerLine2.style('width', '300px');
+  let dividerLine2 = createDiv('');
+  dividerLine2.parent(uiPanel);
+  dividerLine2.style('width', '100%');
   dividerLine2.style('border-top', '2px dotted #000');
   dividerLine2.style('z-index', '1000');
-
-      let dividerLine3 = createDiv('');
-  dividerLine3.position(30, 785);
-  dividerLine3.style('width', '300px');
-  dividerLine3.style('border-top', '2px dotted #000');
-  dividerLine3.style('z-index', '1000');
-  // Print 버튼
-  let printButton = createButton('Print');
-  printButton.position(30, 820);
-  printButton.style('width', '300px');
-  printButton.style('padding', '6px 45px');
-  printButton.style('background-color', '#000');
-  printButton.style('color', '#fff');
-  printButton.style('border', '2px solid #000');
-  printButton.style('border-radius', '50px');
-  printButton.style('font-family', "'Courier New', monospace");
-  printButton.style('font-size', '14px');
-  printButton.style('font-weight', 'bold');
-  printButton.style('cursor', 'pointer');
-  printButton.style('z-index', '1000');
-  printButton.mousePressed(() => {
-    uiIsInteracting = true;
-    printReceiptToPosPrinter();
-  });
-  printButton.mouseReleased(() => { uiIsInteracting = false; });
-
-  // Print 버튼 아래 저작권 문구 (How to use와 동일한 스타일)
-  let copyrightText = createDiv('All right reserved Dongjun Choi @COPYRIGHT 2026');
-  copyrightText.position(30, 880);
-  copyrightText.style('font-family', "'Courier New', monospace");
-  copyrightText.style('font-size', '10.5pt');
-  copyrightText.style('color', '#000');
-  copyrightText.style('max-width', '300px');
-  copyrightText.style('line-height', '1.4');
-  copyrightText.style('z-index', '1000');
 
   // A-Z 버튼들
   let letterButtons = [];
   let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  let startX = 30;
-  let startY = 390;
-  let buttonSpacing = 40;
   let buttonsPerRow = 9;
+
+  let uppercaseGrid = createDiv('');
+  uppercaseGrid.class('ui-grid');
+  uppercaseGrid.parent(uiPanel);
   
   alphabet.forEach((letter, index) => {
-    let row = Math.floor(index / buttonsPerRow);
-    let col = index % buttonsPerRow;
-    let xPos = startX + col * 34;
-    let yPos = startY + row * 34;
-    
     let btn = createDiv(letter);
-    btn.position(xPos, yPos);
+    btn.parent(uppercaseGrid);
     btn.style('display', 'inline-block');
     btn.style('padding', '6px 10px');
     btn.style('border', '1.2px solid #000');
@@ -362,16 +351,14 @@ function setup() {
 
   // a-z 버튼들 (소문자)
   let lowercaseAlphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-  let lowercaseStartY = 505; // 대문자 버튼 아래에 띄워서 배치
+
+  let lowercaseGrid = createDiv('');
+  lowercaseGrid.class('ui-grid');
+  lowercaseGrid.parent(uiPanel);
   
   lowercaseAlphabet.forEach((letter, index) => {
-    let row = Math.floor(index / buttonsPerRow);
-    let col = index % buttonsPerRow;
-    let xPos = startX + col * 34;
-    let yPos = lowercaseStartY + row * 34;
-    
     let btn = createDiv(letter);
-    btn.position(xPos, yPos);
+    btn.parent(lowercaseGrid);
     btn.style('display', 'inline-block');
     btn.style('padding', '5px 10px');
     btn.style('border', '1.2px solid #000');
@@ -420,13 +407,52 @@ function setup() {
 
   // 사용 방법 텍스트
   let instructionText = createDiv('How to use<br>1. Select a letter below.<br>2. Drag and drop it to build up the composition. (Repeat as desired.)<br>3. Press the "Print" button.<br>4. Check the printer behind you.');
-  instructionText.position(30, 218);
+  instructionText.parent(uiPanel);
   instructionText.style('font-family', "'Courier New', monospace");
   instructionText.style('font-size', '10.5pt');
   instructionText.style('color', '#000');
-  instructionText.style('max-width', '300px');
+  instructionText.style('max-width', '100%');
   instructionText.style('line-height', '1.4');
   instructionText.style('z-index', '1000');
+
+  // Letters → switches/controls → print
+  let dividerLine3 = createDiv('');
+  dividerLine3.parent(uiPanel);
+  dividerLine3.style('width', '100%');
+  dividerLine3.style('border-top', '2px dotted #000');
+  dividerLine3.style('z-index', '1000');
+
+  // Print 버튼
+  let printButton = createButton('Print');
+  printButton.parent(uiPanel);
+  printButton.style('width', '100%');
+  printButton.style('padding', '6px 45px');
+  printButton.style('background-color', '#000');
+  printButton.style('color', '#fff');
+  printButton.style('border', '2px solid #000');
+  printButton.style('border-radius', '50px');
+  printButton.style('font-family', "'Courier New', monospace");
+  printButton.style('font-size', '14px');
+  printButton.style('font-weight', 'bold');
+  printButton.style('cursor', 'pointer');
+  printButton.style('z-index', '1000');
+  printButton.mousePressed(() => {
+    uiIsInteracting = true;
+    printReceiptToPosPrinter();
+  });
+  printButton.mouseReleased(() => { uiIsInteracting = false; });
+
+  // Print 버튼 아래 저작권 문구 (How to use와 동일한 스타일)
+  let copyrightText = createDiv('All right reserved Dongjun Choi @COPYRIGHT 2026');
+  copyrightText.parent(uiPanel);
+  copyrightText.style('font-family', "'Courier New', monospace");
+  copyrightText.style('font-size', '10.5pt');
+  copyrightText.style('color', '#000');
+  copyrightText.style('max-width', '100%');
+  copyrightText.style('line-height', '1.4');
+  copyrightText.style('z-index', '1000');
+
+  updateUiPanelLayout();
 
   // 드래그 시작은 캔버스 위에서만 인정 (UI 클릭으로 회전되는 문제 방지)
   canvas.mousePressed(() => {
@@ -448,9 +474,7 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   resetDefaultPerspectiveAndCamera();
-  if(switchContainer) {
-    switchContainer.position(20, windowHeight - 60);
-  }
+  updateUiPanelLayout();
 }
 
 function draw() {
