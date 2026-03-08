@@ -10,8 +10,8 @@ canvas {
 
 .ui-panel {
   position: fixed;
-  left: 0;
-  top: 0;
+  left: 30px;
+  top: 30px;
   width: 300px;
   max-height: calc(100vh - 60px);
   display: flex;
