@@ -60,33 +60,26 @@ function updateUiPanelLayout() {
   }
 
   const basePanelWidth = 300;
-  const margin = 30;
+  const margin = min(30, windowWidth * 0.03, windowHeight * 0.03);
 
-  // Use real viewport size (DOM UI), not just p5 canvas sizing.
-  const viewportWidth = window.innerWidth || windowWidth;
-  const viewportHeight = window.innerHeight || windowHeight;
+  const availableWidth = max(0, windowWidth - margin * 2);
+  const availableHeight = max(0, windowHeight - margin * 2);
 
-  const availableWidth = max(0, viewportWidth - margin * 2);
-  const availableHeight = max(0, viewportHeight - margin * 2);
-
-  uiPanel.style('left', `${margin}px`);
-  uiPanel.style('top', `${margin}px`);
+  // Measure actual UI content height at scale=1 so we can fit it reliably.
+  uiPanel.position(margin, margin);
   uiPanel.style('width', `${basePanelWidth}px`);
   uiPanel.style('transform-origin', 'top left');
-
-  // Measure the natural (unscaled) content height, then scale to fit.
   uiPanel.style('transform', 'scale(1)');
-  uiPanel.style('max-height', `${availableHeight}px`);
+  uiPanel.style('max-height', 'none');
 
-  const contentHeight = uiPanel.elt ? uiPanel.elt.scrollHeight : 0;
+  const contentHeight = uiPanel.elt ? uiPanel.elt.scrollHeight : 900;
+
   const scaleFromWidth = availableWidth / basePanelWidth;
-  const scaleFromHeight = contentHeight > 0 ? (availableHeight / contentHeight) : 1;
-
-  // Allow a smaller minimum so everything can fit on 13-inch screens.
+  const scaleFromHeight = availableHeight / max(1, contentHeight);
   const uiScale = constrain(min(1, scaleFromWidth, scaleFromHeight), 0.45, 1);
 
   uiPanel.style('transform', `scale(${uiScale})`);
-  // Compensate max-height for scale so the visible panel fits in the viewport.
+  // Keep a safety cap; if scale can't fully fit (very small screens), panel will scroll internally.
   uiPanel.style('max-height', `${availableHeight / uiScale}px`);
 }
 
@@ -466,8 +459,6 @@ function setup() {
   copyrightText.style('z-index', '1000');
 
   updateUiPanelLayout();
-  // Re-run after layout to get accurate scrollHeight (esp. on different displays/zoom).
-  setTimeout(updateUiPanelLayout, 0);
 
   // 드래그 시작은 캔버스 위에서만 인정 (UI 클릭으로 회전되는 문제 방지)
   canvas.mousePressed(() => {
