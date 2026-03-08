@@ -1,7 +1,6 @@
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
 }
 
 canvas {
@@ -12,24 +11,35 @@ canvas {
   position: fixed;
   left: 30px;
   top: 30px;
+  z-index: 1000;
   width: 300px;
+  max-width: calc(100vw - 60px);
   max-height: calc(100vh - 60px);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.ui-grid {
-  display: grid;
-  grid-template-columns: repeat(9, 1fr);
+.ui-panel * {
+  box-sizing: border-box;
+}
+
+.ui-divider {
+  width: 100%;
+  border-top: 2px dotted #000;
+  margin: 12px 0;
+}
+
+.ui-button-grid {
+  display: flex;
+  flex-wrap: wrap;
   gap: 6px;
+  width: 100%;
 }
 
 .toggle-switch {
   display: inline-flex;
-  width: 300px;
+  width: 100%;
+  max-width: 300px;
   border: 2px solid #000;
   border-radius: 50px;
   overflow: hidden;

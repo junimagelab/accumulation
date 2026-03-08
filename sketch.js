@@ -12,7 +12,7 @@ let uiIsInteracting = false; // UI 상호작용 여부
 let renderModeSelect; // 렌더링 모드 선택 드롭다운
 let renderMode = 'solid'; // solid / wireframe
 let switchContainer; // 렌더링 모드 스위치 컨테이너
-let uiPanel; // 좌측 UI 패널(반응형)
+let uiPanel; // left UI container (scrollable)
 let requestTransparentExport = false; // PNG export without background request flag
 let canvas; // p5 canvas handle (to scope drag start to canvas)
 let chromeShader; // 크롬 효과 셰이더
@@ -52,35 +52,6 @@ function resetDefaultPerspectiveAndCamera() {
   const camZ = (height / 2) / Math.tan(fov / 2);
   perspective(fov, aspect, camZ / 10, camZ * 10);
   camera(0, 0, camZ, 0, 0, 0, 0, 1, 0);
-}
-
-function updateUiPanelLayout() {
-  if (!uiPanel) {
-    return;
-  }
-
-  const basePanelWidth = 300;
-  const margin = min(30, windowWidth * 0.03, windowHeight * 0.03);
-
-  const availableWidth = max(0, windowWidth - margin * 2);
-  const availableHeight = max(0, windowHeight - margin * 2);
-
-  // Measure actual UI content height at scale=1 so we can fit it reliably.
-  uiPanel.position(margin, margin);
-  uiPanel.style('width', `${basePanelWidth}px`);
-  uiPanel.style('transform-origin', 'top left');
-  uiPanel.style('transform', 'scale(1)');
-  uiPanel.style('max-height', 'none');
-
-  const contentHeight = uiPanel.elt ? uiPanel.elt.scrollHeight : 900;
-
-  const scaleFromWidth = availableWidth / basePanelWidth;
-  const scaleFromHeight = availableHeight / max(1, contentHeight);
-  const uiScale = constrain(min(1, scaleFromWidth, scaleFromHeight), 0.45, 1);
-
-  uiPanel.style('transform', `scale(${uiScale})`);
-  // Keep a safety cap; if scale can't fully fit (very small screens), panel will scroll internally.
-  uiPanel.style('max-height', `${availableHeight / uiScale}px`);
 }
 
 function preload() {
@@ -133,144 +104,10 @@ function setup() {
 
   resetDefaultPerspectiveAndCamera();
 
-  // 좌측 UI 패널 (고정 + 반응형)
+  // Left UI panel (responsive + scrollable)
   uiPanel = createDiv('');
+  uiPanel.id('ui-panel');
   uiPanel.class('ui-panel');
-  uiPanel.style('z-index', '1000');
-
-  // 렌더링 모드 스위치 (Solid / Wireframe)
-  switchContainer = createDiv('');
-  switchContainer.class('toggle-switch');
-  switchContainer.parent(uiPanel);
-  switchContainer.style('z-index', '1000');
-  
-  let solidOption = createDiv('Solid');
-  solidOption.parent(switchContainer);
-  solidOption.class('toggle-option left active');
-  solidOption.id('solid-option');
-  
-  let wireframeOption = createDiv('Wireframe');
-  wireframeOption.parent(switchContainer);
-  wireframeOption.class('toggle-option right inactive');
-  wireframeOption.id('wireframe-option');
-  
-  // Solid 클릭
-  solidOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(renderMode !== 'solid') {
-      renderMode = 'solid';
-      solidOption.removeClass('inactive');
-      solidOption.addClass('active');
-      wireframeOption.removeClass('active');
-      wireframeOption.addClass('inactive');
-    }
-  });
-  solidOption.mouseReleased(() => { uiIsInteracting = false; });
-  
-  // Wireframe 클릭
-  wireframeOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(renderMode !== 'wireframe') {
-      renderMode = 'wireframe';
-      wireframeOption.removeClass('inactive');
-      wireframeOption.addClass('active');
-      solidOption.removeClass('active');
-      solidOption.addClass('inactive');
-    }
-  });
-  wireframeOption.mouseReleased(() => { uiIsInteracting = false; });
-
-  // 폰트 선택 스위치 (Helvetica / Bodoni)
-  let fontSwitchContainer = createDiv('');
-  fontSwitchContainer.class('toggle-switch');
-  fontSwitchContainer.parent(uiPanel);
-  fontSwitchContainer.style('z-index', '1000');
-  
-  let helveticaOption = createDiv('Helvetica');
-  helveticaOption.parent(fontSwitchContainer);
-  helveticaOption.class('toggle-option left active');
-  helveticaOption.id('helvetica-option');
-  
-  let bodoniOption = createDiv('Bodoni');
-  bodoniOption.parent(fontSwitchContainer);
-  bodoniOption.class('toggle-option right inactive');
-  bodoniOption.id('bodoni-option');
-  
-  // Helvetica 클릭
-  helveticaOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(currentFontMode !== 'helvetica') {
-      currentFontMode = 'helvetica';
-      // 현재 글자 geometry 재생성
-      frozenTs = [];
-      hasFrozenOnce = false;
-      showLiveT = true;
-      let fontId = getFontIdForLetter(currentLetter);
-      let cacheKey = `${currentLetter}|${fontId}`;
-      if(letterGeometryCache[cacheKey]) {
-        letterGeometry = letterGeometryCache[cacheKey];
-      } else {
-        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
-        letterGeometryCache[cacheKey] = letterGeometry;
-      }
-    }
-    helveticaOption.removeClass('inactive');
-    helveticaOption.addClass('active');
-    bodoniOption.removeClass('active');
-    bodoniOption.addClass('inactive');
-  });
-  helveticaOption.mouseReleased(() => { uiIsInteracting = false; });
-  
-  // Bodoni 클릭
-  bodoniOption.mousePressed(() => {
-    uiIsInteracting = true;
-    if(currentFontMode !== 'bodoni') {
-      currentFontMode = 'bodoni';
-      // 현재 글자 geometry 재생성
-      frozenTs = [];
-      hasFrozenOnce = false;
-      showLiveT = true;
-      let fontId = getFontIdForLetter(currentLetter);
-      let cacheKey = `${currentLetter}|${fontId}`;
-      if(letterGeometryCache[cacheKey]) {
-        letterGeometry = letterGeometryCache[cacheKey];
-      } else {
-        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
-        letterGeometryCache[cacheKey] = letterGeometry;
-      }
-    }
-    bodoniOption.removeClass('inactive');
-    bodoniOption.addClass('active');
-    helveticaOption.removeClass('active');
-    helveticaOption.addClass('inactive');
-  });
-  bodoniOption.mouseReleased(() => { uiIsInteracting = false; });
-
-  // 3D Depth 슬라이더
-  let depthLabel = createDiv('3D Depth');
-  depthLabel.parent(uiPanel);
-  depthLabel.style('font-family', "'Courier New', monospace");
-  depthLabel.style('font-size', '10.5pt');
-  depthLabel.style('color', '#000');
-  depthLabel.style('z-index', '1000');
-
-  let depthSlider = createSlider(10, 200, 100, 1);
-  depthSlider.parent(uiPanel);
-  depthSlider.style('width', '100%');
-  depthSlider.style('z-index', '1000');
-  depthSlider.style('cursor', 'pointer');
-
-  depthSlider.input(() => {
-    uiIsInteracting = true;
-    letterDepth = depthSlider.value();
-    depthLabel.html('3D Depth: ' + letterDepth);
-    // 캐시 초기화 (깊이 변경 시 모든 캐시 무효)
-    letterGeometryCache = {};
-    let fontId = getFontIdForLetter(currentLetter);
-    letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
-    letterGeometryCache[`${currentLetter}|${fontId}`] = letterGeometry;
-  });
-  depthSlider.mouseReleased(() => { uiIsInteracting = false; });
 
   // 왼쪽 상단 설명 텍스트
   let descriptionText = createDiv('This work explores axial accumulation as a visual method, asking what kind of typeface might emerge when letterforms are layered and reassembled, shifting our perspective on what a font can become in future.');
@@ -281,32 +118,38 @@ function setup() {
   descriptionText.style('max-width', '100%');
   descriptionText.style('line-height', '1.4');
   descriptionText.style('z-index', '1000');
+  descriptionText.style('margin', '0 0 12px 0');
 
 
   // 설명과 How to use 사이 점선
   let dividerLine1 = createDiv('');
   dividerLine1.parent(uiPanel);
-  dividerLine1.style('width', '100%');
-  dividerLine1.style('border-top', '2px dotted #000');
-  dividerLine1.style('z-index', '1000');
+  dividerLine1.class('ui-divider');
 
+
+  // 사용 방법 텍스트
+  let instructionText = createDiv('How to use<br>1. Select a letter below.<br>2. Drag and drop it to build up the composition. (Repeat as desired.)<br>3. Press the "Print" button.<br>4. Check the printer behind you.');
+  instructionText.parent(uiPanel);
+  instructionText.style('font-family', "'Courier New', monospace");
+  instructionText.style('font-size', '10.5pt');
+  instructionText.style('color', '#000');
+  instructionText.style('max-width', '100%');
+  instructionText.style('line-height', '1.4');
+  instructionText.style('z-index', '1000');
+  instructionText.style('margin', '0 0 12px 0');
 
   let dividerLine2 = createDiv('');
   dividerLine2.parent(uiPanel);
-  dividerLine2.style('width', '100%');
-  dividerLine2.style('border-top', '2px dotted #000');
-  dividerLine2.style('z-index', '1000');
+  dividerLine2.class('ui-divider');
 
-  // A-Z 버튼들
+  // A-Z / a-z 버튼들 (responsive grid)
   let letterButtons = [];
   let alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  let buttonsPerRow = 9;
-
   let uppercaseGrid = createDiv('');
-  uppercaseGrid.class('ui-grid');
   uppercaseGrid.parent(uiPanel);
-  
-  alphabet.forEach((letter, index) => {
+  uppercaseGrid.class('ui-button-grid');
+
+  alphabet.forEach((letter) => {
     let btn = createDiv(letter);
     btn.parent(uppercaseGrid);
     btn.style('display', 'inline-block');
@@ -359,10 +202,12 @@ function setup() {
   let lowercaseAlphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
 
   let lowercaseGrid = createDiv('');
-  lowercaseGrid.class('ui-grid');
   lowercaseGrid.parent(uiPanel);
-  
-  lowercaseAlphabet.forEach((letter, index) => {
+  lowercaseGrid.class('ui-button-grid');
+  lowercaseGrid.style('margin-top', '8px');
+  lowercaseGrid.style('margin-bottom', '12px');
+
+  lowercaseAlphabet.forEach((letter) => {
     let btn = createDiv(letter);
     btn.parent(lowercaseGrid);
     btn.style('display', 'inline-block');
@@ -411,22 +256,140 @@ function setup() {
     letterButtons.push(btn);
   });
 
-  // 사용 방법 텍스트
-  let instructionText = createDiv('How to use<br>1. Select a letter below.<br>2. Drag and drop it to build up the composition. (Repeat as desired.)<br>3. Press the "Print" button.<br>4. Check the printer behind you.');
-  instructionText.parent(uiPanel);
-  instructionText.style('font-family', "'Courier New', monospace");
-  instructionText.style('font-size', '10.5pt');
-  instructionText.style('color', '#000');
-  instructionText.style('max-width', '100%');
-  instructionText.style('line-height', '1.4');
-  instructionText.style('z-index', '1000');
+  // 렌더링 모드 스위치 (Solid / Wireframe)
+  switchContainer = createDiv('');
+  switchContainer.parent(uiPanel);
+  switchContainer.class('toggle-switch');
+  switchContainer.style('z-index', '1000');
+  switchContainer.style('margin', '0 0 8px 0');
 
-  // Letters → switches/controls → print
+  let solidOption = createDiv('Solid');
+  solidOption.parent(switchContainer);
+  solidOption.class('toggle-option left active');
+  solidOption.id('solid-option');
+
+  let wireframeOption = createDiv('Wireframe');
+  wireframeOption.parent(switchContainer);
+  wireframeOption.class('toggle-option right inactive');
+  wireframeOption.id('wireframe-option');
+
+  solidOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if (renderMode !== 'solid') {
+      renderMode = 'solid';
+      solidOption.removeClass('inactive');
+      solidOption.addClass('active');
+      wireframeOption.removeClass('active');
+      wireframeOption.addClass('inactive');
+    }
+  });
+  solidOption.mouseReleased(() => { uiIsInteracting = false; });
+
+  wireframeOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if (renderMode !== 'wireframe') {
+      renderMode = 'wireframe';
+      wireframeOption.removeClass('inactive');
+      wireframeOption.addClass('active');
+      solidOption.removeClass('active');
+      solidOption.addClass('inactive');
+    }
+  });
+  wireframeOption.mouseReleased(() => { uiIsInteracting = false; });
+
+  // 폰트 선택 스위치 (Helvetica / Bodoni)
+  let fontSwitchContainer = createDiv('');
+  fontSwitchContainer.parent(uiPanel);
+  fontSwitchContainer.class('toggle-switch');
+  fontSwitchContainer.style('z-index', '1000');
+  fontSwitchContainer.style('margin', '0 0 12px 0');
+
+  let helveticaOption = createDiv('Helvetica');
+  helveticaOption.parent(fontSwitchContainer);
+  helveticaOption.class('toggle-option left active');
+  helveticaOption.id('helvetica-option');
+
+  let bodoniOption = createDiv('Bodoni');
+  bodoniOption.parent(fontSwitchContainer);
+  bodoniOption.class('toggle-option right inactive');
+  bodoniOption.id('bodoni-option');
+
+  helveticaOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if (currentFontMode !== 'helvetica') {
+      currentFontMode = 'helvetica';
+      frozenTs = [];
+      hasFrozenOnce = false;
+      showLiveT = true;
+      let fontId = getFontIdForLetter(currentLetter);
+      let cacheKey = `${currentLetter}|${fontId}`;
+      if (letterGeometryCache[cacheKey]) {
+        letterGeometry = letterGeometryCache[cacheKey];
+      } else {
+        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
+        letterGeometryCache[cacheKey] = letterGeometry;
+      }
+    }
+    helveticaOption.removeClass('inactive');
+    helveticaOption.addClass('active');
+    bodoniOption.removeClass('active');
+    bodoniOption.addClass('inactive');
+  });
+  helveticaOption.mouseReleased(() => { uiIsInteracting = false; });
+
+  bodoniOption.mousePressed(() => {
+    uiIsInteracting = true;
+    if (currentFontMode !== 'bodoni') {
+      currentFontMode = 'bodoni';
+      frozenTs = [];
+      hasFrozenOnce = false;
+      showLiveT = true;
+      let fontId = getFontIdForLetter(currentLetter);
+      let cacheKey = `${currentLetter}|${fontId}`;
+      if (letterGeometryCache[cacheKey]) {
+        letterGeometry = letterGeometryCache[cacheKey];
+      } else {
+        letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
+        letterGeometryCache[cacheKey] = letterGeometry;
+      }
+    }
+    bodoniOption.removeClass('inactive');
+    bodoniOption.addClass('active');
+    helveticaOption.removeClass('active');
+    helveticaOption.addClass('inactive');
+  });
+  bodoniOption.mouseReleased(() => { uiIsInteracting = false; });
+
+  // 3D Depth 슬라이더
+  let depthLabel = createDiv('3D Depth');
+  depthLabel.parent(uiPanel);
+  depthLabel.style('font-family', "'Courier New', monospace");
+  depthLabel.style('font-size', '10.5pt');
+  depthLabel.style('color', '#000');
+  depthLabel.style('z-index', '1000');
+  depthLabel.style('margin', '0 0 6px 0');
+
+  let depthSlider = createSlider(10, 200, 100, 1);
+  depthSlider.parent(uiPanel);
+  depthSlider.style('width', '100%');
+  depthSlider.style('z-index', '1000');
+  depthSlider.style('cursor', 'pointer');
+  depthSlider.style('margin', '0 0 12px 0');
+
+  depthSlider.input(() => {
+    uiIsInteracting = true;
+    letterDepth = depthSlider.value();
+    depthLabel.html('3D Depth: ' + letterDepth);
+    letterGeometryCache = {};
+    let fontId = getFontIdForLetter(currentLetter);
+    letterGeometry = buildLetterGeometry(currentLetter, LETTER_SIZE, letterDepth, CURVE_DETAIL, getFontForLetter(currentLetter), fontId);
+    letterGeometryCache[`${currentLetter}|${fontId}`] = letterGeometry;
+  });
+  depthSlider.mouseReleased(() => { uiIsInteracting = false; });
+
   let dividerLine3 = createDiv('');
   dividerLine3.parent(uiPanel);
-  dividerLine3.style('width', '100%');
-  dividerLine3.style('border-top', '2px dotted #000');
-  dividerLine3.style('z-index', '1000');
+  dividerLine3.class('ui-divider');
 
   // Print 버튼
   let printButton = createButton('Print');
@@ -442,13 +405,14 @@ function setup() {
   printButton.style('font-weight', 'bold');
   printButton.style('cursor', 'pointer');
   printButton.style('z-index', '1000');
+  printButton.style('margin', '0 0 10px 0');
   printButton.mousePressed(() => {
     uiIsInteracting = true;
     printReceiptToPosPrinter();
   });
   printButton.mouseReleased(() => { uiIsInteracting = false; });
 
-  // Print 버튼 아래 저작권 문구 (How to use와 동일한 스타일)
+  // Print 버튼 아래 저작권 문구
   let copyrightText = createDiv('All right reserved Dongjun Choi @COPYRIGHT 2026');
   copyrightText.parent(uiPanel);
   copyrightText.style('font-family', "'Courier New', monospace");
@@ -457,9 +421,7 @@ function setup() {
   copyrightText.style('max-width', '100%');
   copyrightText.style('line-height', '1.4');
   copyrightText.style('z-index', '1000');
-
-  updateUiPanelLayout();
-
+  copyrightText.style('margin', '0');
   // 드래그 시작은 캔버스 위에서만 인정 (UI 클릭으로 회전되는 문제 방지)
   canvas.mousePressed(() => {
     if (uiIsInteracting) {
@@ -480,7 +442,6 @@ function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
   pixelDensity(1);
   resetDefaultPerspectiveAndCamera();
-  updateUiPanelLayout();
 }
 
 function draw() {
