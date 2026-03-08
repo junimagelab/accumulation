@@ -18,6 +18,14 @@ let canvas; // p5 canvas handle (to scope drag start to canvas)
 let chromeShader; // 크롬 효과 셰이더
 let svgImage; // SVG 이미지 (111.svg)
 let svgImage2; // SVG 이미지 (222.svg)
+
+// Layout: fixed design resolution so the same ratio is preserved across screens.
+// If you want the "reference" look to match a specific machine, set these to that machine's browser size.
+const DESIGN_WIDTH = 1440;
+const DESIGN_HEIGHT = 900;
+let stageScale = 1;
+let stageOffsetX = 0;
+let stageOffsetY = 0;
 // Receipt print (POS) settings
 const RECEIPT_PAPER_WIDTH_MM = 72; // user printer roll width
 const RECEIPT_PAPER_HEIGHT_MM = 210; // matches printer setting 72x210
@@ -60,21 +68,31 @@ function updateUiPanelLayout() {
   }
 
   const basePanelWidth = 300;
-  const margin = 30;
-
-  const availableWidth = max(0, windowWidth - margin * 2);
-  const availableHeight = max(0, windowHeight - margin * 2);
-
-  // Heuristic: original UI was designed around ~900px height.
-  const scaleFromWidth = availableWidth / basePanelWidth;
-  const scaleFromHeight = availableHeight / 900;
-  const uiScale = constrain(min(1, scaleFromWidth, scaleFromHeight), 0.6, 1);
+  const baseMargin = 30;
 
   uiPanel.style('width', `${basePanelWidth}px`);
+  uiPanel.style('left', `${stageOffsetX + baseMargin * stageScale}px`);
+  uiPanel.style('top', `${stageOffsetY + baseMargin * stageScale}px`);
   uiPanel.style('transform-origin', 'top left');
-  uiPanel.style('transform', `scale(${uiScale})`);
-  // Compensate max-height for scale so the visible panel fits in the viewport.
-  uiPanel.style('max-height', `${availableHeight / uiScale}px`);
+  uiPanel.style('transform', `scale(${stageScale})`);
+
+  const visibleHeight = max(0, windowHeight - (stageOffsetY + baseMargin * stageScale) * 2);
+  uiPanel.style('max-height', `${visibleHeight / stageScale}px`);
+}
+
+function updateStageLayout() {
+  // Keep the design look identical on larger screens (no upscale).
+  stageScale = min(1, windowWidth / DESIGN_WIDTH, windowHeight / DESIGN_HEIGHT);
+  stageOffsetX = (windowWidth - DESIGN_WIDTH * stageScale) / 2;
+  stageOffsetY = (windowHeight - DESIGN_HEIGHT * stageScale) / 2;
+
+  if (canvas) {
+    canvas.position(stageOffsetX, stageOffsetY);
+    canvas.style('width', `${DESIGN_WIDTH * stageScale}px`);
+    canvas.style('height', `${DESIGN_HEIGHT * stageScale}px`);
+  }
+
+  updateUiPanelLayout();
 }
 
 function preload() {
@@ -111,7 +129,7 @@ function getFontIdForLetter(letter) {
 }
 
 function setup() {
-  canvas = createCanvas(windowWidth, windowHeight, WEBGL);
+  canvas = createCanvas(DESIGN_WIDTH, DESIGN_HEIGHT, WEBGL);
   // 레티나 환경에서 픽셀 수가 2~4배로 늘어 렌더링이 크게 느려질 수 있어 1로 고정
   pixelDensity(1);
   setAttributes('alpha', true);
@@ -452,7 +470,7 @@ function setup() {
   copyrightText.style('line-height', '1.4');
   copyrightText.style('z-index', '1000');
 
-  updateUiPanelLayout();
+  updateStageLayout();
 
   // 드래그 시작은 캔버스 위에서만 인정 (UI 클릭으로 회전되는 문제 방지)
   canvas.mousePressed(() => {
@@ -471,10 +489,7 @@ function windowResized() {
   if (isReceiptPrinting) {
     return;
   }
-  resizeCanvas(windowWidth, windowHeight);
-  pixelDensity(1);
-  resetDefaultPerspectiveAndCamera();
-  updateUiPanelLayout();
+  updateStageLayout();
 }
 
 function draw() {
