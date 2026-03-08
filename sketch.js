@@ -487,13 +487,15 @@ function windowResized() {
   updateLeftUIScale();
 }
 
-// 왼쪽 UI 컨테이너를 뷰포트 높이에 따라 스케일
+// 왼쪽 UI 컨테이너를 뷰포트 크기에 따라 스케일
 function updateLeftUIScale() {
   if (!leftUIContainer) return;
-  // 실제 브라우저 뷰포트 높이 기준으로 비율 계산
-  // 하단 8% 여백을 항상 유지
-  let vh = window.innerHeight;
-  let scale = (vh * 0.9) / UI_DESIGN_HEIGHT;
+  // 높이 기준: 하단 10% 여백 유지
+  let heightScale = (window.innerHeight * 0.90) / UI_DESIGN_HEIGHT;
+  // 너비 기준: UI(360px)가 화면 왼쪽 25% 안에 들어오도록
+  let widthScale = (window.innerWidth * 0.25) / 360;
+  // 둘 중 더 작은 값으로 스케일 → 높이/너비 모두 맞게
+  let scale = Math.min(heightScale, widthScale);
   leftUIContainer.style('transform', 'scale(' + scale + ')');
 }
 
