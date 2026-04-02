@@ -451,7 +451,7 @@ function setup() {
   printButton.mouseReleased(() => { uiIsInteracting = false; });
 
   // 12. 저작권 문구 (top: 880px)
-  let copyrightText = createDiv('All right reserved Dongjun Choi @COPYRIGHT 2026');
+  let copyrightText = createDiv('All right reserved Vor-forms @COPYRIGHT 2026');
   copyrightText.parent(leftUIContainer);
   copyrightText.style('position', 'absolute');
   copyrightText.style('left', '30px');
